@@ -1,0 +1,78 @@
+@import "base/_meyer-reset.scss";
+@import "bourbon/_bourbon.scss";
+
+
+@import "luckyguess/_vars.scss";
+@import "luckyguess/_effects.scss";
+
+@import "luckyguess/_current_score.scss";
+@import "luckyguess/_game_choices.scss";
+@import "luckyguess/_header.scss";
+@import "luckyguess/_logo.scss";
+@import "luckyguess/_name_entry.scss";
+@import "luckyguess/_highscores.scss";
+
+
+
+
+
+body {
+	font-family: 'Lato', Calibri, Arial, sans-serif;
+	color: $white;
+	min-height: 100%;
+}
+
+section {
+	position: relative;
+	overflow: hidden;
+	min-height: 100vh;
+}
+
+
+
+.container {
+	min-height: 100vh
+}
+
+.level-0 {
+	background: $level-0;
+
+}
+
+%button {
+    color: white;
+	border: 1px solid white;
+    padding: 20px;
+    display: block;
+    max-width: 193px;
+    margin-left: auto;
+    margin-right: auto;
+	@include transition-property(background);
+	@include transition-duration(.1s);
+	@include transition-timing-function(ease-in-out);
+    cursor: pointer;
+    &:hover {
+		background: rgba(255,255,255, .2);
+    }
+}
+
+.transparent {
+	opacity: 0 !important;
+	pointer-events: none;
+}
+// Each 'page' of the game
+.overlay {
+	top: 0;
+	margin-top: 60px;
+	position: absolute;
+	text-align: center;
+	display: block;
+	width: 100%;
+	max-width: 100vw;
+	@include transition(all .6s ease-in-out);
+}
+
+#confetti {
+	position: absolute;
+	margin-top: 0;
+}

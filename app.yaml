@@ -1,0 +1,20 @@
+application: luckyguess
+version: 1
+runtime: go
+api_version: go1
+
+handlers:
+- url: /css
+  static_dir: css
+  application_readable: true
+- url: /js
+  static_dir: js
+  application_readable: true
+- url: /images
+  static_dir: images
+  application_readable: true
+- url: /templates
+  static_dir: templates
+  application_readable: true
+- url: /.*
+  script: _go_app

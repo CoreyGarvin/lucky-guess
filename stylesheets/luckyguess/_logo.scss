@@ -1,0 +1,52 @@
+#logo {
+	padding-top:20vh;
+	padding-left: 35px;
+	pointer-events: none;
+	&.moved {
+		padding-top: 35px;
+	}
+	&.transparent {
+		padding-left: 30px;
+	}
+	h3 {
+		font-size: 40px;
+		color: $won;
+		line-height: 45px;
+		font-style: italic;		
+		span {
+			padding-right: 80px;
+			font-size: 70px;
+			font-weight: 200;
+			line-height: 25px;
+			color: $white;
+			font-style: normal;
+		}
+	}
+	h4 {
+		font-size: 10px;
+		color: #ddd;
+		margin: 0;
+		padding-left:17px;
+		line-height: 5px;
+	}
+	img {
+		width: 50px;
+		@include position(absolute, 40px 25px null null);
+
+	    /* height: 30px; */
+	    /* transform: scale3d(6,6,1); */
+	    @include animation-name(hop);
+	    @include animation-duration(5s);
+	    @include animation-fill-mode(forwards)
+	  
+	    // animation: hop 5s 1;
+	    // animation-fill-mode: forwards;
+	}
+
+	div {
+		position: absolute;
+		left: 50%;
+		@include transform(translateX(-50%))
+	}
+
+}

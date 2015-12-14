@@ -1,0 +1,96 @@
+header {
+	position: absolute;
+	width: 100%;
+	top:0;
+	padding: 10px 0;
+	background: $white;
+	text-align: center;
+	@include transition-property(opacity);
+	@include transition-duration(1.0s);
+	@include transition-timing-function(ease-in-out);
+	h1 {
+		font-size: 2.625em;
+		font-size: 6vw;
+		color: #777;
+		line-height: 1.3;
+		font-weight: 500;
+	}
+	h2 {
+		font-size: 5vw;
+		color: #888;
+		font-weight: 300;
+	}
+	& > * {
+		@include transition-property(opacity);
+		@include transition-duration(1.0s);
+		@include transition-timing-function(ease-in-out);
+	}
+	span {
+		font-weight:bold;
+		&.colder {color: #0e83cd;}
+		&.warmer {color: orange;}
+		&.hot {color: $hot;}
+		&.won {color: $won;}
+	}
+
+	#cupcake {
+		@include position(absolute, 32px 14px null null);
+		@include size(61px);
+		@include transform-origin(50% 100%);
+		// @include animation-name(none);
+		@include transition(transform .5s ease-in-out);
+
+		img {
+			width: 100%;
+			@include transform-origin(50% 100%);
+			@include transition(transform .5s ease-in-out);
+		}
+	    
+	    &.idle {
+			// @include animation-name(idle-container);
+		    // @include animation-duration(3s);
+		    // @include animation-iteration-count(infinite);
+		    // @include animation-fill-mode(forwards);
+		    // @include animation-timing-function(ease-in-out);
+		    // @include animation-direction(alternate);
+		    
+		    img {
+			    @include animation-name(idle-cupcake);
+			    @include animation-duration(1.5s);
+			    @include animation-iteration-count(infinite);
+			    @include animation-fill-mode(forwards);
+			    @include animation-timing-function(ease-in-out);
+			    @include animation-direction(alternate);
+		    }
+	    }
+
+	    &.ducked {
+	    	@include transform(scale3d(1,.8,1));
+	    	img {
+	    		
+			}
+	    }
+	    &.colder {
+	    	@include transform(scale3d(1,.8,1));
+	    	img {
+	    		@include animation-name(colder-cupcake);
+			    @include animation-duration(.1s);
+			    @include animation-iteration-count(3);
+			    @include animation-fill-mode(forwards);
+			    @include animation-timing-function(ease-in-out);
+			    @include animation-direction(alternate);
+			}
+	    }
+	    &.warmer, &.hot {
+	    	img {
+			    @include animation-name(bounce);
+			    @include animation-duration(.5s);
+			    @include animation-fill-mode(forwards);
+			    @include animation-timing-function(ease-in-out);
+			    @include animation-direction(alternate);
+	    	}
+	    }
+	    &.warmer img {@include animation-iteration-count(2);}
+	    &.hot img { @include animation-iteration-count(infinite);}
+	}
+}

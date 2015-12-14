@@ -1,0 +1,17 @@
+#current-score {
+	padding-top: 30px;
+	table {
+		margin: 0 auto;
+		th {
+			font-size: 30px;
+			font-weight: 200;
+			text-align: center;
+			background: none;
+			color: $white;
+		}
+		td {
+			font-size: 120px;
+			border-radius: 500px;
+		}
+	}
+}

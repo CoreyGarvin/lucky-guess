@@ -1,0 +1,17 @@
+#name-entry {
+	input {
+		margin: 170px auto 0 auto;
+		font-size: 20px;
+		border: none;
+		outline: none;
+		border-radius: 3px;
+		line-height: 24px;
+		color: #999;
+		padding: 10px 10px;
+		text-align:center;
+	}
+}
+#name-submit {
+	margin-top: 20px;
+	@extend %button;
+}
