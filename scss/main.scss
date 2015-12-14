@@ -7,12 +7,10 @@
 @import "luckyguess/_current_score.scss";
 @import "luckyguess/_game_choices.scss";
 @import "luckyguess/_header.scss";
+@import "luckyguess/_footer.scss";
 @import "luckyguess/_logo.scss";
 @import "luckyguess/_name_entry.scss";
 @import "luckyguess/_highscores.scss";
-
-
-
 
 
 body {
@@ -26,8 +24,6 @@ section {
 	overflow: hidden;
 	min-height: 100vh;
 }
-
-
 
 .container {
 	min-height: 100vh

@@ -9,16 +9,19 @@
 	}
 }
 .choice {
+	$diameter: 80;
+	$diameter_px: $diameter * 1px;
+	@include size($diameter_px);
+	line-height: $diameter_px;
+	font-size: ($diameter / 2) * 1px;
 	background: rgba(255,255,255,0.1);
 	position: relative;
-	$diameter: 80px;
 	display: inline-block;
-	font-size: 40px;
-	line-height: $diameter;
+
+
 	cursor: pointer;
 	margin: 8px;
-	width: $diameter;
-	height: $diameter;
+	
 	border-radius: 50%;
 	color: rgba(255,255,255,.6); 
 	box-shadow: 0px 0px 0 0 rgba(255,255,255,0);

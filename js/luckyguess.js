@@ -1,32 +1,27 @@
 /**@license MIT-promiscuous-©Ruben Verborgh*/
 !function(n,t){function c(n,t){return(typeof t)[0]==n}function u(o,e){return e=function f(i,h,l,a,p,s){function y(n){return function(t){p&&(p=0,f(c,n,t))}}if(a=f.q,i!=c)return u(function(n,t){a.push({p:this,r:n,j:t,1:i,0:h})});if(l&&c(n,l)|c(t,l))try{p=l.then}catch(j){h=0,l=j}if(c(n,p))try{p.call(l,y(1),h=y(0))}catch(j){h(j)}else for(e=function(t,e){return c(n,t=h?t:e)?u(function(n,c){r(this,n,c,l,t)}):o},s=0;s<a.length;)p=a[s++],c(n,i=p[h])?r(p.p,p.r,p.j,l,i):(h?p.r:p.j)(l)},e.q=[],o.call(o={then:function(n,t){return e(n,t)},"catch":function(n){return e(0,n)}},function(n){e(c,1,n)},function(n){e(c,0,n)}),o}function r(u,r,o,e,f){setTimeout(function(){try{e=f(e),f=e&&c(t,e)|c(n,e)&&e.then,c(n,f)?e==u?o(TypeError()):f.call(e,r,o):r(e)}catch(i){o(i)}})}function o(n){return u(function(t){t(n)})}Promise=u,u.resolve=o,u.reject=function(n){return u(function(t,c){c(n)})},u.all=function(n){return u(function(t,c,u,r){r=[],u=n.length||t(r),n.map(function(n,e){o(n).then(function(n){r[e]=n,--u||t(r)},c)})})}}("f","o");
 
-var numberGame = (function(){
+// https://bitbucket.org/bentomas/smokesignals.js/overview
+smokesignals={convert:function(c,e){e={};c.on=function(d,a){(e[d]=e[d]||[]).push(a);return c};c.once=function(d,a){function b(){a.apply(c.off(d,b),arguments)}b.h=a;return c.on(d,b)};c.off=function(d,a){for(var b=e[d],f=0;a&&b&&b[f];f++)b[f]!=a&&b[f].h!=a||b.splice(f--,1);f||delete e[d];return c};c.emit=function(d){for(var a=e[d],b=0;a&&a[b];)a[b++].apply(c,a.slice.call(arguments,1));return c
+
+
+// Service for interacting with server
+var LuckyGuessService = (function(){
 	var api = {}
+	// Creates a new game, or continues a 'saved' game when the key is provided
 	api.newGame = function(key, name) {
 		return new Promise(function(resolve, reject){
-
-			if (key == undefined || key == null) {key = "";}
-			else {key = "key=" + key;}
-
-			if (name == undefined || name == null) {
-				name = getParameterByName("name");
-				if (name != null) {
-					name = "name=" + name;
-				} else {
-					name = ""
-				}
-			} else {
-				name = "name=" + name;
-			}
-
-			callAjax("/newgame?" + key + "&" + name, function(response){
+			var queryString = encodeData({
+				key: key,
+				name: name || getParameterByName("name") || ""
+			});
+			ajax("/newgame?" + queryString, function(response){
 				var gameEnv = (function(newGame){
 					var game = newGame;
 					game.guess = function(guess) {
 						var self = this;
 						return new Promise(function(resolve, reject){
-							callAjax("/guess?guess=" + guess + "&key=" + self.gameID, 
+							ajax("/guess?guess=" + guess + "&key=" + self.gameID, 
 								function(response){
 									resolve(JSON.parse(response));
 								},
@@ -52,55 +47,87 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	console.log("DOM fully loaded and parsed");
 	var gameButtons = {};
 	var gameDiv = document.getElementById("game-choices");
-	var h1 = document.querySelector("h1");
-	var h2 = document.querySelector("h2");
-	var header = document.querySelector("header");
 
-	// Pages
+	// Containers
+	var header = document.querySelector("header");
 	var logoCtn = document.getElementById("logo");
 	var nameEntry = document.getElementById("name-entry");
-	var nameInput = document.getElementById("name-input");
 	var hiScores = document.getElementById("highscores");
 	var score = document.getElementById("current-score");
+
+	var footer = (function(){
+		var el = document.getElementById("footer");
+		var guesses = 0;
+		var score = 0;
+		var footer = {};
+		footer.el = el;
+		footer.fadeOut = function() {
+			addClass(el, "transparent");
+		}
+		footer.fadeIn = function() {
+			removeClass(el, "transparent");
+		}
+		footer.setState = function(guesses, score) {
+			var tokens = el.querySelectorAll(".tokens .inner");
+			for (var i = 0; i < tokens.length; i++) {
+				if ((i+1) <= guesses) {
+					removeClass(tokens[i], "exhausted");
+				} else {
+					addClass(tokens[i], "exhausted");
+				}
+			}
+			el.querySelector(".score span").textContent = score;
+		};
+		return footer;
+	}());
 
 	// Components
 	var playerScore = document.getElementById("player-score");
 	var continueBtn = document.getElementById('btn-continue');
+	var nameInput = document.getElementById("name-input");
 	var cupcake = document.getElementById('cupcake');
+	var h1 = document.querySelector("h1");
+	var h2 = document.querySelector("h2");
 	
 	var game = {};
 	var prevScore = 0;
 
-	// Handle the 'return' key
+	// Begin add listeners:
+
+	// Handler - Name entry - Handle the 'return' key
 	nameInput.addEventListener("keydown", function(){
 		if (event.keyCode == 13) {
 			document.getElementById('btn-done').click();
 		}
 	});
 
-	// Name entry button
+	// Handler - Name entry - handle the submit button
 	document.getElementById('name-submit').addEventListener("click", function(){
 		addClass(nameEntry, "transparent");
 		addClass(logoCtn, "transparent");
 		setTimeout(function(){
-			numberGame.newGame(game.gameID, nameInput.value).then(
+			LuckyGuessService.newGame(game.gameID, nameInput.value).then(
 				function(g){
 					game = g;
 					addClass(h1, "transparent"); addClass(h2, "transparent");
 					addGameListeners();
 					initGame();
 				},
-				function(err){}
+				function(err){
+					console.log("There was a problem!");
+					console.log(err);
+				}
 			);
 		}, 1500);
 	});
 
+	// Handler - game over continue button
 	continueBtn.addEventListener("click", function(){
 		addClass(hiScores, "transparent");
 		addClass(score, "transparent");
 		addClass(h1, "transparent");
 		addClass(h2,"transparent");
-		numberGame.newGame(null, game.profile.playerName).then(
+		LuckyGuessService.newGame(null, game.profile.playerName).then(
 			function(g){
 				game = g;
 				
@@ -117,7 +144,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	}, 100);
 
 	// First game
-	numberGame.newGame().then(
+	LuckyGuessService.newGame().then(
 		function(g){
 			setTimeout(function(){
 				addClass(logoCtn, "transparent");
@@ -131,7 +158,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}, 0); // was 2500 before debug
 		},
 
-		function(err){}
+		function(err){
+			console.log("There was a problem!");
+			console.log(err);
+		}
 	);
 
 	var staggerAddClass = function(els, className, ms) {
@@ -217,6 +247,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				
 				game.guess(el.choiceIndex).then(
 					function(response) {
+						footer.setState(response.currentGame.attemptsRemaining, response.profile.score);
 						console.log(response.currentGame.attemptsRemaining + " attempts left");
 						
 						var scoreDelta = response.profile.score - prevScore;
@@ -360,13 +391,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
 									      		} else {
 									      			// addClass(score, "transparent");
 													// Start a new game
-													numberGame.newGame(response.gameID).then(
+													LuckyGuessService.newGame(response.gameID).then(
 														function(g){
 															game = g;
 															setTimeout(function(){addClass(h1, "transparent");addClass(h2, "transparent");}, 1000);
 															setTimeout(function(){addGameListeners(); initGame();}, 0);
 														},
-														function(err){}
+														function(err){
+															console.log("There was a problem!");
+															console.log(err);
+														}
 													);
 												}
 												clearInterval(timerId);
@@ -401,59 +435,4 @@ function disableConfetti(){
 	setTimeout(function(){confettiEnabled = false;}, 500);
 	
 	addClass(document.getElementById('confetti'), "transparent");
-}
-
-
-function hasClass(elem, className) {
-    return new RegExp(' ' + className + ' ').test(' ' + elem.className + ' ');
-}
-
-function addClass(elem, className) {
-    if (!hasClass(elem, className)) {
-        elem.className += ' ' + className;
-    }
-}
-
-function removeClass(elem, className) {
-    var newClass = ' ' + elem.className.replace( /[\t\r\n]/g, ' ') + ' ';
-    if (hasClass(elem, className)) {
-        while (newClass.indexOf(' ' + className + ' ') >= 0 ) {
-            newClass = newClass.replace(' ' + className + ' ', ' ');
-        }
-        elem.className = newClass.replace(/^\s+|\s+$/g, '');
-    }
-} 
-
-function toggleClass(elem, className) {
-    var newClass = ' ' + elem.className.replace( /[\t\r\n]/g, ' ' ) + ' ';
-    if (hasClass(elem, className)) {
-        while (newClass.indexOf(' ' + className + ' ') >= 0 ) {
-            newClass = newClass.replace( ' ' + className + ' ' , ' ' );
-        }
-        elem.className = newClass.replace(/^\s+|\s+$/g, '');
-    } else {
-        elem.className += ' ' + className;
-    }
-}
-
-function callAjax(url, success, fail){
-    var xmlhttp;
-    // compatible with IE7+, Firefox, Chrome, Opera, Safari
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function(){
-        if (xmlhttp.readyState == 4) {
-        	if (xmlhttp.status == 200){
-        		success(xmlhttp.responseText);
-        	} else {
-        		fail(xmlhttp.responseText);
-        	}
-        }
-    }
-    xmlhttp.open("GET", url, true);
-    xmlhttp.send();
-}
-
-function getParameterByName(name) {
-    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
-    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }

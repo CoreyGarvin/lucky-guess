@@ -1,0 +1,46 @@
+#footer {
+	@include position(absolute, null null 0 null);
+    width: 100%;
+    padding: 10px;
+    font-size: 17px;
+    text-align: center;
+    background: rgba(0,0,0,0.2);
+    @include transition(all .6s ease-in-out);
+    .attempts-remaining {
+    	margin-right: 25px;
+    	.tokens {
+    		margin-left: 5px;
+    	}
+    	.guess-token {
+    		position: relative;
+    		display: inline-block;
+    		@include size(20px);
+    		vertical-align: middle;
+    		&:not(:first-child):not(:last-child) {
+    			margin: 0 1px 0 1px;
+    		}
+    		.inner {
+    			@include position(absolute, 50% 50% null null);
+				@include transform(translate(50%, -50%));
+
+
+    			background: #64bb5d;
+    			border: 2px solid rgba(0,0,0,.5);
+    			display: block;
+    			@include size(95%);
+    			border-radius: 50%;
+    			@include transition-property(all);
+				@include transition-duration(.5s);
+				@include transition-timing-function(ease-in-out);
+	    		&.exhausted {
+	    			@include size(8px);
+	    			background: rgba(0,0,0, 0.3);
+	    			opacity: .1;
+	    		}
+    		}
+    	}
+    }
+    .score {
+    	margin-left: 25px;
+    }
+}
