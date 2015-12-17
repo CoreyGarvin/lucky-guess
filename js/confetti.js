@@ -105,7 +105,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
     })();
 
     window.step = function() {
-      console.log("step");
       results = [];
 
       if (confettiEnabled) {

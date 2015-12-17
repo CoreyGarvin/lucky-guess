@@ -1,34 +1,54 @@
-function hasClass(elem, className) {
-    return new RegExp(' ' + className + ' ').test(' ' + elem.className + ' ');
+function hasClass(el, className) {
+    return new RegExp(' ' + className + ' ').test(' ' + el.className + ' ');
 }
 
-function addClass(elem, className) {
-    if (!hasClass(elem, className)) {
-        elem.className += ' ' + className;
+function addClass(el, className) {
+    if (!hasClass(el, className)) {
+        el.className += ' ' + className;
     }
 }
 
-function removeClass(elem, className) {
-    var newClass = ' ' + elem.className.replace( /[\t\r\n]/g, ' ') + ' ';
-    if (hasClass(elem, className)) {
+function removeClass(el, className) {
+    var newClass = ' ' + el.className.replace( /[\t\r\n]/g, ' ') + ' ';
+    if (hasClass(el, className)) {
         while (newClass.indexOf(' ' + className + ' ') >= 0 ) {
             newClass = newClass.replace(' ' + className + ' ', ' ');
         }
-        elem.className = newClass.replace(/^\s+|\s+$/g, '');
+        el.className = newClass.replace(/^\s+|\s+$/g, '');
     }
 } 
 
-function toggleClass(elem, className) {
-    var newClass = ' ' + elem.className.replace( /[\t\r\n]/g, ' ' ) + ' ';
-    if (hasClass(elem, className)) {
+function toggleClass(el, className) {
+    var newClass = ' ' + el.className.replace( /[\t\r\n]/g, ' ' ) + ' ';
+    if (hasClass(el, className)) {
         while (newClass.indexOf(' ' + className + ' ') >= 0 ) {
             newClass = newClass.replace( ' ' + className + ' ' , ' ' );
         }
-        elem.className = newClass.replace(/^\s+|\s+$/g, '');
+        el.className = newClass.replace(/^\s+|\s+$/g, '');
     } else {
-        elem.className += ' ' + className;
+        el.className += ' ' + className;
     }
 }
+
+// Adds a class to a list of elements, at random differing times
+// over the course of ms
+var staggerAddClass = function(els, className, ms) {
+    for (var i = 0; i < els.length; i++) {
+        setTimeout(function(el){
+            addClass(el, className)
+        }, Math.floor(Math.random() * ms), els[i]);
+    }
+};
+
+// Removes a class to a list of elements, at random differing times
+// over the course of ms
+var staggerRemoveClass = function(els, className, ms) {
+    for (var i = 0; i < els.length; i++) {
+        setTimeout(function(el){
+            removeClass(el, className)
+        }, Math.floor(Math.random() * ms), els[i]);
+    }
+};
 
 function ajax(url, success, fail){
     var xmlhttp;
