@@ -39,7 +39,9 @@
 			@include animation(sonarEffectB .8s ease-out infinite reverse);
 		}
 	}
-
+	&.grow {
+		@include transform(scale3d(1.5,1.5,1));
+	}
 	&.spent {
 		pointer-events: none;
 		&:not(.ajax) {
@@ -77,9 +79,6 @@
 			&:after{
 				@include animation(shockwave-won 3s);
 			}
-		}
-		&.grow {
-			@include transform(scale3d(1.5,1.5,1));
 		}
 	}
 	&:after {

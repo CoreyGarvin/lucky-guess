@@ -17,7 +17,7 @@ var LuckyGuessService = (function() {
 					game.guess = function(guess) {
 						var self = this; // 'this' refers to 'game'
 						return new Promise(function(resolve, reject) {
-							ajax("/guess?guess=" + guess + "&key=" + self.gameID, 
+							ajax("/guess?guess=" + guess + "&key=" + self.gameID,
 								function(response) {
 									// Update the state of the game internally
 									var newGameState = JSON.parse(response);
@@ -25,7 +25,7 @@ var LuckyGuessService = (function() {
 									self.currentGame = newGameState.currentGame;
 									self.profile = newGameState.profile;
 									self.highScores = newGameState.highScores
-									resolve(self);
+									resolve();
 								},
 								function(response) {
 									reject(response);
@@ -52,28 +52,23 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 	// Containers
 	var header = document.querySelector("header");
-	
+
 	var nameEntry = document.getElementById("name-entry");
 	var hiScores = document.getElementById("highscores");
 	var score = document.getElementById("current-score");
 
 	var appController = (function() {
-		var self = {};
+		var component = {};
 		var registeredComponents = [];
 		var game = null;
 		var currentState = null;
 
-
-		self.register = function() {
-			for (var i = 0; i < arguments.length; i++) {
-				registeredComponents.push(arguments[i]);
+		var enterState = function(state, arg) {
+			if (this.hasOwnProperty("states") && this.states.hasOwnProperty(state)) {
+				this.states[state](arg);
+				return true;
 			}
-		};
-
-		self.unRegister = function() {
-			for (var i = 0; i < arguments.length; i++) {
-				registeredComponents.pop(arguments[i]);
-			}
+			return false;
 		};
 
 		var broadcastState = function(state, arg) {
@@ -83,19 +78,40 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					registeredComponents[i].enterState(currentState, arg);
 				}
 			}
-		};						
+		};
 
-		self.begin = function() {
+		component.register = function() {
+			for (var i = 0; i < arguments.length; i++) {
+				if (!arguments[i].hasOwnProperty("enterState")) {
+					arguments[i].enterState = enterState;
+				}
+				registeredComponents.push(arguments[i]);
+			}
+		};
+
+		component.unRegister = function() {
+			for (var i = 0; i < arguments.length; i++) {
+				registeredComponents.pop(arguments[i]);
+			}
+		};
+
+
+
+		component.begin = function() {
 			broadcastState("intro", null);
+			setTimeout(function() {
+				startNewGame();
+			}, 100); // was 2500 before debug
+		};
+
+		var startNewGame = function() {
 			LuckyGuessService.newGame().then(
 				// New game created successfully
 				function(g) {
 					game = g;
 					broadcastState("createdGame", game);
-					setTimeout(function() {
-						broadcastState("presentGame", game);
-						broadcastState("idle", game);
-					}, 200); // was 2500 before debug
+					broadcastState("presentGame", game);
+					broadcastState("idle", game);
 				},
 
 				function(err) {
@@ -105,40 +121,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			);
 		};
 
-		self.playerGuess = function(guessIndex) {
+		component.playerGuess = function(guessIndex) {
 			broadcastState("playerGuessed", guessIndex);
 			game.guess(guessIndex).then(
 				function() {
 					broadcastState("guessResponse", game);
-					var hints = response.game.hints;
-					var gameOver = response.currentGame.attemptsRemaining == 0
-									&& (response.currentGame.borrowableAttempts < 1)
-									&& (response.currentGame.bonusAttempts < 1);
-
-					if (hints.won) {
-
-					} else if (hints.hot) {
-
-					} else if (hints.colder && hints.warmer) {
-						// Neither warmer nor colder
-					} else if (hints.warmer) {
-
-					} else if (hints.colder) {
-
-					} else if (!gameOver) {
-						addClass(cupcake, "idle");
-					}
-
-					// Player loses
-					if (!hints.won) {
-						if (gameOver) {
-							// gameover
-						} else {
-							//next turn
-						}
-
-					}
-
 				},
 
 				function(err) {
@@ -147,51 +134,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				}
 			);
 		};
-
-		self.startNewGame = function() {
-			// First game
-			LuckyGuessService.newGame().then(
-				function(g) {
-					setTimeout(function() {
-						addClass(logoCtn, "transparent");
-						game = g;
-						addGameListeners();
-						initGame(g);
-						// move logo into position for sign-in page
-						setTimeout(function() {
-							addClass(logoCtn, "moved");
-						}, 2000);
-					}, 0); // was 2500 before debug
-				},
-
-				function(err) {
-					console.log("There was a problem!");
-					console.log(err);
-				}
-			);
-		};
-
-		self.presentGame = function() {
-			// self.emit("game present");
-		};
-
-		// self.on("game button clicked", log);
-		return self;
+		return component;
 	}());
 
 	var footer = (function() {
-		var self = {};
+		var component = {};
 		var el = document.getElementById("footer");
 		var guesses = 0;
 		var score = 0;
-
-		self.enterState = function(state, arg) {
-			if (states.hasOwnProperty(state)) {
-				states[state](arg);
-				return true;
-			}
-			return false;
-		};
 
 		var fadeOut = function() {addClass(el, "transparent");};
 		var fadeIn = function() {removeClass(el, "transparent");};
@@ -208,28 +158,21 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			el.querySelector(".score span").textContent = gameState.profile.score;;
 		};
 
-		var states = {
+		component.states = {
 			intro: fadeOut,
 			createdGame: updateState,
-			presentGame: fadeIn
+			presentGame: fadeIn,
+			guessResponse: updateState
 		};
 
-		return self;
+		return component;
 	}());
 
 	// Component - contains the circular game buttons
 	var gameButtons = (function() {
-		var self = {};
+		var component = {};
 		var el = document.getElementById("game-choices");
 		var buttons = [];
-		
-		self.enterState = function(state, arg) {
-			if (states.hasOwnProperty(state)) {
-				states[state](arg);
-				return true;
-			}
-			return false;
-		};
 
 		var fadeOut = function() {addClass(el, "transparent");};
 		var fadeIn  = function() {removeClass(el, "transparent");};
@@ -243,8 +186,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				html += '<a class="choice transparent choice-' + gameState.currentGame.choices[i] + '">' + gameState.currentGame.choices[i] + '</a>';
 			}
 			el.innerHTML = html;
-			buttons = el.querySelectorAll(".choice");
+			// So that our result is an Array
+			buttons = Array.prototype.slice.call(el.querySelectorAll(".choice"));
+			// buttons = el.querySelectorAll(".choice");
 
+			// Add Listener - btn click should submit guess
 			for (var i = 0; i < buttons.length; i++) {
 				buttons[i].choiceIndex = i;
 				buttons[i].addEventListener('click', function(event) {
@@ -259,35 +205,63 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			addClass(buttons[guessIndex], "ajax");
 		};
 
+		var guessResponse = function(gameState) {
+			var hints = gameState.currentGame.hints;
+			var guessIndex = gameState.currentGame.attemptHistory.slice(-1)[0];
+			var gameOver =  hints.won || (
+								gameState.currentGame.attemptsRemaining == 0
+								&& (gameState.currentGame.borrowableAttempts < 1)
+								&& (gameState.currentGame.bonusAttempts < 1));
 
+			addClass(buttons[guessIndex], "spent");
+			removeClass(buttons[guessIndex], "ajax");
 
-		// self.present = function() {
+			if (!gameOver) {
+				removeClass(el, "ajax");
+			}
 
-		// };
+			if (hints.won) {
+				addClass(buttons[guessIndex], "won");
 
-		var states = {
+			} else if (hints.hot) {
+				addClass(buttons[guessIndex], "hot");
+			} else if (hints.colder && hints.warmer) {
+				// Neither warmer nor colder
+			} else if (hints.warmer) {
+				addClass(buttons[guessIndex], "warmer");
+			} else if (hints.colder) {
+				addClass(buttons[guessIndex], "colder");
+			} else if (!gameOver) {
+				addClass(cupcake, "idle");
+			}
+
+			if (gameOver) {
+				var nonWinners = buttons.filter(function(val, index) {return index != gameState.currentGame.answerKey});
+				var winner = buttons[gameState.currentGame.answerKey];
+				if (hints.won) {
+					staggerAddClass(nonWinners, "transparent", 500);
+					addClass(winner, "grow")
+				} else {
+					staggerAddClass(nonWinners, "transparent", 1500);
+				}
+				setTimeout(function(){addClass(winner, "transparent");}, 2000);
+			}
+		};
+
+		component.states = {
 			intro: staggerFadeOut,
 			createdGame: init,
 			presentGame: staggerFadeIn,
 			playerGuessed: playerGuessed,
+			guessResponse: guessResponse,
 		};
-
-
-		return self;
+		return component;
 	}());
 
 	// Component - contains the circular game buttons
 	var gameLogo = (function() {
 		el = document.getElementById("logo");
-		var self = {};
-
-		self.enterState = function(state, arg) {
-			if (self.states.hasOwnProperty(state)) {
-				self.states[state](arg);
-				return true;
-			}
-			return false;
-		};
+		var component = {};
 
 		var fadeOut = function() {addClass(el, "transparent");};
 		var fadeIn = function() {removeClass(el, "transparent");};
@@ -299,14 +273,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}, 2000);
 		};
 
-		self.states = {
+		component.states = {
 			intro: fadeIn,
 			presentGame: presentGame
 		};
-		return self;
+		return component;
 	}());
 
-	
+
 
 	// Components
 	var playerScore = document.getElementById("player-score");
@@ -315,7 +289,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var cupcake = document.getElementById('cupcake');
 	var h1 = document.querySelector("h1");
 	var h2 = document.querySelector("h2");
-	
+
 	var game = {};
 	var prevScore = 0;
 
@@ -326,12 +300,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 function enableConfetti() {
 	confettiEnabled = true;
-	
+
 	setTimeout(function() {removeClass(document.getElementById('confetti'), "transparent");}, 500);
 }
 
 function disableConfetti() {
 	setTimeout(function() {confettiEnabled = false;}, 500);
-	
+
 	addClass(document.getElementById('confetti'), "transparent");
 }
