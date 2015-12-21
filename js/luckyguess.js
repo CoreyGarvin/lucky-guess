@@ -63,21 +63,28 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		var game = null;
 		var currentState = null;
 
-		var enterState = function(state, arg) {
+		var enterState = function() {
+			var arguments = Array.prototype.slice.call(arguments);
+			var state = arguments.shift();
 			if (this.hasOwnProperty("states") && this.states.hasOwnProperty(state)) {
-				this.states[state](arg);
-				return true;
-			}
-			return false;
-		};
-
-		var broadcastState = function(state, arg) {
-			currentState = state;
-			for (i = 0; i < registeredComponents.length; i++) {
-				if (registeredComponents[i].hasOwnProperty("enterState")) {
-					registeredComponents[i].enterState(currentState, arg);
+				var p = this.states[state].apply(this, arguments);
+				if (p instanceof Object && p.hasOwnProperty("then")) {
+					return p;
+				} else {
+					return Promise.resolve(p);
 				}
 			}
+			return Promise.resolve();
+		};
+
+		var broadcastState = function() {
+			var args = arguments;
+			return Promise.all(registeredComponents.map(
+				function(component) {
+					// return component.enterState(currentState, arg);
+					return component.enterState.apply(component, args);
+				})
+			);
 		};
 
 		component.register = function() {
@@ -95,54 +102,49 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}
 		};
 
-
-
 		component.begin = function() {
-			broadcastState("intro", null);
-			setTimeout(function() {
-				startNewGame();
-			}, 100); // was 2500 before debug
+			broadcastState("init")
+			.then(function() {return broadcastState("intro", 200);})
+			.then(startNewGame);
 		};
 
 		var startNewGame = function() {
-			LuckyGuessService.newGame().then(
-				// New game created successfully
-				function(g) {
+			LuckyGuessService.newGame()
+			.then(function(g) {
 					game = g;
-					broadcastState("createdGame", game);
-					broadcastState("presentGame", game);
-					broadcastState("idle", game);
-				},
+					return broadcastState("createdGame", game);
+			})
+			.then(function() {return broadcastState("presentGame", game);})
+			.then(function() {return broadcastState("idle", game);});
+		};
 
-				function(err) {
-					console.log("There was a problem!");
-					console.log(err);
-				}
-			);
+		var determineHint = function(gameState) {
+			var hints = gameState.currentGame.hints;
+			if (hints.won) {return "won";}
+			if (hints.hot) {return "hot";}
+			if (hints.colder && hints.warmer) {return "neither";}
+			if (hints.warmer) {return "warmer";}
+			if (hints.colder) {return "colder";}
+			return "";
 		};
 
 		component.playerGuess = function(guessIndex) {
-			broadcastState("playerGuessed", guessIndex);
-			game.guess(guessIndex).then(
-				function() {
-					broadcastState("guessResponse", game);
-				},
-
-				function(err) {
-					console.log("There was a problem!");
-					console.log(err);
-				}
-			);
+			broadcastState("playerGuessed", guessIndex)
+			.then(function() {return game.guess(guessIndex);})
+			.then(function() {
+				return broadcastState("guessResponse", game.currentGame.attemptHistory.slice(-1)[0], determineHint(game));
+			});
 		};
 		return component;
 	}());
 
 	var footer = (function() {
 		var component = {};
-		var el = document.getElementById("footer");
+		var el = {};
 		var guesses = 0;
 		var score = 0;
 
+		var init = function() {el = document.getElementById("footer");}
 		var fadeOut = function() {addClass(el, "transparent");};
 		var fadeIn = function() {removeClass(el, "transparent");};
 
@@ -159,6 +161,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		};
 
 		component.states = {
+			init: init,
 			intro: fadeOut,
 			createdGame: updateState,
 			presentGame: fadeIn,
@@ -171,15 +174,16 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	// Component - contains the circular game buttons
 	var gameButtons = (function() {
 		var component = {};
-		var el = document.getElementById("game-choices");
+		var el = {};
 		var buttons = [];
 
 		var fadeOut = function() {addClass(el, "transparent");};
 		var fadeIn  = function() {removeClass(el, "transparent");};
 		var staggerFadeIn = function() {staggerRemoveClass(buttons, "transparent", 1000);};
 		var staggerFadeOut = function() {staggerAddClass(buttons, "transparent", 1000);};
+		var init = function() {el = document.getElementById("game-choices");};
 
-		var init = function(gameState) {
+		var createdGame = function(gameState) {
 			// Create game buttons HTML
 			var html = "";
 			for (var i = 0; i < gameState.currentGame.choices.length; i++) {
@@ -188,7 +192,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			el.innerHTML = html;
 			// So that our result is an Array
 			buttons = Array.prototype.slice.call(el.querySelectorAll(".choice"));
-			// buttons = el.querySelectorAll(".choice");
 
 			// Add Listener - btn click should submit guess
 			for (var i = 0; i < buttons.length; i++) {
@@ -205,6 +208,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			addClass(buttons[guessIndex], "ajax");
 		};
 
+		var guessResponseStandard = function(guessIndex, hint) {
+			addClass(buttons[guessIndex], "spent");
+			removeClass(buttons[guessIndex], "ajax");
+			addClass(buttons[guessIndex], hint);
+			
+			removeClass(el, "ajax");
+		};
+
 		var guessResponse = function(gameState) {
 			var hints = gameState.currentGame.hints;
 			var guessIndex = gameState.currentGame.attemptHistory.slice(-1)[0];
@@ -215,10 +226,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 			addClass(buttons[guessIndex], "spent");
 			removeClass(buttons[guessIndex], "ajax");
-
-			if (!gameOver) {
-				removeClass(el, "ajax");
-			}
 
 			if (hints.won) {
 				addClass(buttons[guessIndex], "won");
@@ -231,8 +238,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				addClass(buttons[guessIndex], "warmer");
 			} else if (hints.colder) {
 				addClass(buttons[guessIndex], "colder");
-			} else if (!gameOver) {
-				addClass(cupcake, "idle");
 			}
 
 			if (gameOver) {
@@ -245,24 +250,61 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					staggerAddClass(nonWinners, "transparent", 1500);
 				}
 				setTimeout(function(){addClass(winner, "transparent");}, 2000);
+			} else {
+				removeClass(el, "ajax");
 			}
 		};
 
 		component.states = {
+			init: init,
 			intro: staggerFadeOut,
-			createdGame: init,
+			createdGame: createdGame,
 			presentGame: staggerFadeIn,
 			playerGuessed: playerGuessed,
-			guessResponse: guessResponse,
+			guessResponse: guessResponseStandard,
 		};
 		return component;
 	}());
 
-	// Component - contains the circular game buttons
+	// Component - Logo
 	var gameLogo = (function() {
-		el = document.getElementById("logo");
+		var el = {};
 		var component = {};
 
+		var init = function() {el = document.getElementById("logo");};
+		var fadeOut = function() {addClass(el, "transparent");};
+		var fadeIn = function() {removeClass(el, "transparent");};
+		var intro = function(duration) {
+			fadeIn();
+			return new Promise(function (resolve, reject) {
+				setTimeout(function() {
+					resolve();
+				}, duration);
+			});
+		};
+
+		var presentGame = function() {
+			fadeOut();
+			setTimeout(function() {
+				addClass(el, "moved");
+			}, 2000);
+		};
+
+		component.states = {
+			init: init,
+			intro: intro,
+			presentGame: presentGame
+		};
+		return component;
+	}());
+
+
+	// Component - contains the circular game buttons
+	var scoreDisplay = (function() {
+		el = {};
+		var component = {};
+
+		var init = function() {el = document.getElementById("current-score");};
 		var fadeOut = function() {addClass(el, "transparent");};
 		var fadeIn = function() {removeClass(el, "transparent");};
 
@@ -274,8 +316,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		};
 
 		component.states = {
-			intro: fadeIn,
-			presentGame: presentGame
+			init: init,
+			presentGame: fadeOut
 		};
 		return component;
 	}());
