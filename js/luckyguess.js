@@ -57,17 +57,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	var hiScores = document.getElementById("highscores");
 	var score = document.getElementById("current-score");
 
-	var appController = (function() {
+	var newComponent = function(states) {
 		var component = {};
-		var registeredComponents = [];
-		var game = null;
-		var currentState = null;
+		var states = states;
 
-		var enterState = function() {
+		component.enterState = function() {
 			var arguments = Array.prototype.slice.call(arguments);
 			var state = arguments.shift();
-			if (this.hasOwnProperty("states") && this.states.hasOwnProperty(state)) {
-				var p = this.states[state].apply(this, arguments);
+			if (states.hasOwnProperty(state)) {
+				var p = states[state].apply(this, arguments);
 				if (p instanceof Object && p.hasOwnProperty("then")) {
 					return p;
 				} else {
@@ -76,9 +74,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}
 			return Promise.resolve();
 		};
+		return component;
+	};
+
+	var appController = (function() {
+		var component = {};
+		var registeredComponents = [];
+		var game = null;
+		var currentState = null;
 
 		var broadcastState = function() {
 			var args = arguments;
+			console.log("Game State: " + arguments[0]);
 			return Promise.all(registeredComponents.map(
 				function(component) {
 					// return component.enterState(currentState, arg);
@@ -108,8 +115,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			.then(startNewGame);
 		};
 
-		var startNewGame = function() {
-			LuckyGuessService.newGame()
+		var startNewGame = function(existingGame) {
+			var name = undefined;
+			if (existingGame.hasOwnProperty("gameID")) {
+				name = existingGame.profile.name;
+			}
+			LuckyGuessService.newGame(undefined, name)
 			.then(function(g) {
 					game = g;
 					return broadcastState("createdGame", game);
@@ -127,19 +138,39 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			if (hints.colder) {return "colder";}
 			return "";
 		};
-
+// if (response.currentGame.attemptHistory.length == 1) enableConfetti();
+// else if (false && response.profile.wins == 1 && response.profile.playerName == "") {
 		component.playerGuess = function(guessIndex) {
-			broadcastState("playerGuessed", guessIndex)
+			var guessValue = game.currentGame.choices[guessIndex];
+			broadcastState("playerGuessed", guessIndex, guessValue)
 			.then(function() {return game.guess(guessIndex);})
+			.then(function() {return broadcastState("guessResponse",guessIndex, determineHint(game));})
 			.then(function() {
-				return broadcastState("guessResponse", game.currentGame.attemptHistory.slice(-1)[0], determineHint(game));
+				var hints = game.currentGame.hints;
+				var gameOver =  hints.won || (
+									game.currentGame.attemptsRemaining == 0
+									&& (game.currentGame.borrowableAttempts < 1)
+									&& (game.currentGame.bonusAttempts < 1));
+
+				if (hints.won) {
+					var promise = broadcastState("gameWon", guessIndex, guessValue);
+					if (game.profile.wins > 0 && game.profile.playerName == "") {
+						promise = promise.then(function() {return broadcastState("nameEntry");});
+					}
+				} else if (gameOver) {
+					broadcastState("gameLost", guessIndex, guessValue)
+					.then(function() {return broadcastState("highScores");})
+					.then(function() {return startNewGame();});
+				} else {
+					broadcastState("nextTurn")
+					.then(function() {return broadcastState("idle", game);});
+				}
 			});
 		};
 		return component;
 	}());
 
 	var footer = (function() {
-		var component = {};
 		var el = {};
 		var guesses = 0;
 		var score = 0;
@@ -160,15 +191,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			el.querySelector(".score span").textContent = gameState.profile.score;;
 		};
 
-		component.states = {
-			init: init,
-			intro: fadeOut,
-			createdGame: updateState,
-			presentGame: fadeIn,
-			guessResponse: updateState
-		};
-
-		return component;
+		return newComponent(
+			{
+				init: init,
+				intro: fadeOut,
+				createdGame: updateState,
+				presentGame: fadeIn,
+				// guessResponse: updateState
+			}
+		);
 	}());
 
 	// Component - contains the circular game buttons
@@ -212,64 +243,72 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			addClass(buttons[guessIndex], "spent");
 			removeClass(buttons[guessIndex], "ajax");
 			addClass(buttons[guessIndex], hint);
-			
+
 			removeClass(el, "ajax");
 		};
 
-		var guessResponse = function(gameState) {
-			var hints = gameState.currentGame.hints;
-			var guessIndex = gameState.currentGame.attemptHistory.slice(-1)[0];
-			var gameOver =  hints.won || (
-								gameState.currentGame.attemptsRemaining == 0
-								&& (gameState.currentGame.borrowableAttempts < 1)
-								&& (gameState.currentGame.bonusAttempts < 1));
+	// 	var guessResponse = function(gameState) {
+	// 		var hints = gameState.currentGame.hints;
+	// 		var guessIndex = gameState.currentGame.attemptHistory.slice(-1)[0];
+	// 		var gameOver =  hints.won || (
+	// 							gameState.currentGame.attemptsRemaining == 0
+	// 							&& (gameState.currentGame.borrowableAttempts < 1)
+	// 							&& (gameState.currentGame.bonusAttempts < 1));
 
-			addClass(buttons[guessIndex], "spent");
-			removeClass(buttons[guessIndex], "ajax");
+	// 		addClass(buttons[guessIndex], "spent");
+	// 		removeClass(buttons[guessIndex], "ajax");
 
-			if (hints.won) {
-				addClass(buttons[guessIndex], "won");
+	// 		if (hints.won) {
+	// 			addClass(buttons[guessIndex], "won");
 
-			} else if (hints.hot) {
-				addClass(buttons[guessIndex], "hot");
-			} else if (hints.colder && hints.warmer) {
-				// Neither warmer nor colder
-			} else if (hints.warmer) {
-				addClass(buttons[guessIndex], "warmer");
-			} else if (hints.colder) {
-				addClass(buttons[guessIndex], "colder");
+	// 		} else if (hints.hot) {
+	// 			addClass(buttons[guessIndex], "hot");
+	// 		} else if (hints.colder && hints.warmer) {
+	// 			// Neither warmer nor colder
+	// 		} else if (hints.warmer) {
+	// 			addClass(buttons[guessIndex], "warmer");
+	// 		} else if (hints.colder) {
+	// 			addClass(buttons[guessIndex], "colder");
+	// 		}
+
+	// 		if (gameOver) {
+	// 			var nonWinners = buttons.filter(function(val, index) {return index != gameState.currentGame.answerKey});
+	// 			var winner = buttons[gameState.currentGame.answerKey];
+	// 			if (hints.won) {
+	// 				staggerAddClass(nonWinners, "transparent", 500);
+	// 				addClass(winner, "grow")
+	// 			} else {
+	// 				staggerAddClass(nonWinners, "transparent", 1500);
+	// 			}
+	// 			setTimeout(function(){addClass(winner, "transparent");}, 2000);
+	// 		} else {
+	// 			removeClass(el, "ajax");
+	// 		}
+	// 	};
+
+		// component.states = {
+		// 	init: init,
+		// 	intro: staggerFadeOut,
+		// 	createdGame: createdGame,
+		// 	presentGame: staggerFadeIn,
+		// 	playerGuessed: playerGuessed,
+		// 	guessResponse: guessResponseStandard,
+		// };
+		return newComponent(
+			{
+				init: init,
+				intro: staggerFadeOut,
+				createdGame: createdGame,
+				presentGame: staggerFadeIn,
+				playerGuessed: playerGuessed,
+				guessResponse: guessResponseStandard,
 			}
-
-			if (gameOver) {
-				var nonWinners = buttons.filter(function(val, index) {return index != gameState.currentGame.answerKey});
-				var winner = buttons[gameState.currentGame.answerKey];
-				if (hints.won) {
-					staggerAddClass(nonWinners, "transparent", 500);
-					addClass(winner, "grow")
-				} else {
-					staggerAddClass(nonWinners, "transparent", 1500);
-				}
-				setTimeout(function(){addClass(winner, "transparent");}, 2000);
-			} else {
-				removeClass(el, "ajax");
-			}
-		};
-
-		component.states = {
-			init: init,
-			intro: staggerFadeOut,
-			createdGame: createdGame,
-			presentGame: staggerFadeIn,
-			playerGuessed: playerGuessed,
-			guessResponse: guessResponseStandard,
-		};
-		return component;
+		);
 	}());
 
 	// Component - Logo
 	var gameLogo = (function() {
 		var el = {};
-		var component = {};
 
 		var init = function() {el = document.getElementById("logo");};
 		var fadeOut = function() {addClass(el, "transparent");};
@@ -290,19 +329,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}, 2000);
 		};
 
-		component.states = {
-			init: init,
-			intro: intro,
-			presentGame: presentGame
-		};
-		return component;
+		return newComponent(
+			{
+				init: init,
+				intro: intro,
+				presentGame: presentGame
+			}
+		);
 	}());
 
 
 	// Component - contains the circular game buttons
 	var scoreDisplay = (function() {
 		el = {};
-		var component = {};
 
 		var init = function() {el = document.getElementById("current-score");};
 		var fadeOut = function() {addClass(el, "transparent");};
@@ -315,11 +354,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}, 2000);
 		};
 
-		component.states = {
-			init: init,
-			presentGame: fadeOut
-		};
-		return component;
+		return newComponent(
+			{
+				init: init,
+				presentGame: fadeOut
+			}
+		);
 	}());
 
 
