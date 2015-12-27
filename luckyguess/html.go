@@ -5,26 +5,32 @@ var html = `
 <html lang="en" class="no-js">
 	<head>
 		<meta charset="UTF-8" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
-		<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Lucky Guess</title>
 		<meta name="description" content="Try to use clues to guess the correct number" />
 		<meta name="keywords" content="icons, hover, round, circular, transition, animation, css3" />
-		<meta name="author" content="Corey" />
-		<link rel="shortcut icon" href="../favicon.ico"> 
+		<meta name="author" content="Corey Garvin" />
+		<link rel="shortcut icon" href="../favicon.ico">
 		<link rel="stylesheet" type="text/css" href="css/main.css" />
-		<!-- <link rel="stylesheet" type="text/css" href="css/component.css" /> -->
-		<script src="js/confetti.js" type="text/javascript" charset="UTF-8"></script>
-		<script src="js/utils.js" type="text/javascript" charset="UTF-8"></script>
-		<script src="js/luckyguess.js" type="text/javascript" charset="UTF-8"></script>
-		
+		<script src="js/lucky_guess_app/promiscuous.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/utils.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/services/luckyguess-service.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/app-controller.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/components/buttons.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/components/confetti.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/components/footer.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/components/logo.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/components/name-entry.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/components/score.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/luckyguess.js" type="text/javascript" charset="UTF-8"></script>
 		<meta name="viewport" content="initial-scale=1.0,  maximum-scale=1.0">
 	</head>
 	<body>
 		<div class="container level-0">
 			<header class = "transparent">
 				<h1 class = "transparent">What Number Am I Thinking Of?</h1>
-				<h2 class = "transparent">I give you 3 guesses</h2>	
+				<h2 class = "transparent">I give you 3 guesses</h2>
 				<div id = "cupcake" class = "idle">
 					<image  src = "images/cupcake2.svg"></image>
 				</div>
@@ -69,7 +75,7 @@ var html = `
 					<a class="choice transparent">10</a>
 			</div>
 			<div id = "footer">
-				<span class = "attempts-remaining">Guesses: 
+				<span class = "attempts-remaining">Guesses:
 					<span class="tokens">
 						<span class="guess-token"><span class="inner"></span></span>
 						<span class="guess-token"><span class="inner"></span></span>

@@ -1,3 +1,15 @@
+var debug = true;
+var log = function(msg) { if (debug) console.log(msg);}
+
+var hintsToString = function(hints) {
+    if (hints.won) {return "won";}
+    if (hints.hot) {return "hot";}
+    if (hints.colder && hints.warmer) {return "neither";}
+    if (hints.warmer) {return "warmer";}
+    if (hints.colder) {return "colder";}
+    return "";
+};
+
 function hasClass(el, className) {
     return new RegExp(' ' + className + ' ').test(' ' + el.className + ' ');
 }

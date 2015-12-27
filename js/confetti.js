@@ -43,10 +43,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     xpos = 0.5;
 
-    // document.onmousemove = function(e) {
-    //   return xpos = e.pageX / w;
-    // };
-
     window.requestAnimationFrame = (function() {
       return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
         return window.setTimeout(callback, 1000 / 60);
@@ -125,5 +121,4 @@ document.addEventListener("DOMContentLoaded", function(event) {
     step();
 
   }).call(this);
-
 });
