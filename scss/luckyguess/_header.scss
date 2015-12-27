@@ -10,19 +10,19 @@ header {
 	@include transition-timing-function(ease-in-out);
 	h1 {
 		font-size: 2.625em;
-		font-size: 6vw;
+		font-size: 4vh;
 		color: #777;
 		line-height: 1.3;
 		font-weight: 500;
 	}
 	h2 {
-		font-size: 5vw;
+		font-size: 3vh;
 		color: #888;
 		font-weight: 300;
 	}
 	& > * {
 		@include transition-property(opacity);
-		@include transition-duration(1.0s);
+		@include transition-duration(.60s);
 		@include transition-timing-function(ease-in-out);
 	}
 	span {

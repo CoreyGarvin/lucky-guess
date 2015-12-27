@@ -19,6 +19,8 @@ var html = `
 		<script src="js/lucky_guess_app/app-controller.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/components/buttons.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/components/confetti.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/components/header.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/components/high-scores.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/components/footer.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/components/logo.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/components/name-entry.js" type="text/javascript" charset="UTF-8"></script>

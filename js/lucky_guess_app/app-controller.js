@@ -129,7 +129,7 @@ var appController = (function() {
                 .then(function() {startNewGame(game);});
             } else if (gameOver) {
                 broadcastState("gameLost", guessIndex, guessValue)
-                .then(function() {return broadcastState("highScores");})
+                .then(function() {return broadcastState("highScores", game.highScores);})
                 .then(function() {return startNewGame();});
             } else {
                 broadcastState("nextTurn")
