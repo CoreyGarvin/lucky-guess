@@ -1,8 +1,4 @@
-
-
-
 document.addEventListener("DOMContentLoaded", function(event) {
-	console.log("DOMContentLoaded");
-
+	log("Starting app..")
 	appController.begin();
 });

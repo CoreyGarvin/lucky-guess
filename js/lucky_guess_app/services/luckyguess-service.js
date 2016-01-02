@@ -6,7 +6,7 @@ var LuckyGuessService = (function() {
         return new Promise(function(resolve, reject) {
             var queryString = encodeData({
                 key: key,
-                name: name || getParameterByName("name") || ""
+                name: name || getParameterByName("name") || undefined
             });
             ajax("/newgame?" + queryString, function(response) {
                 var gameEnv = (function(newGame) {

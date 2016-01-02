@@ -69,16 +69,16 @@ var appController = (function() {
     component.begin = function() {
         broadcastState("init")
         .then(function() {return broadcastState("intro", 200);})
-        .then(startNewGame);
+        .then(function() {return startNewGame();});
     };
 
-    var startNewGame = function(existingGame) {
-        var name = undefined;
-        var gameID = undefined;
-        if (existingGame != null && existingGame.hasOwnProperty("gameID")) {
-            gameID = existingGame.gameID;
-            name = existingGame.profile.name;
-        }
+    var startNewGame = function(gameID, name) {
+        // var name = undefined;
+        // var gameID = undefined;
+        // if (existingGame != null && existingGame.hasOwnProperty("gameID")) {
+        //     gameID = existingGame.gameID;
+        //     name = existingGame.profile.name;
+        // }
         LuckyGuessService.newGame(gameID, name)
         .then(function(g) {
                 game = g;
@@ -117,7 +117,7 @@ var appController = (function() {
                         .then(function(names) {
                             return new Promise(function (resolve) {
                                 for(i = 0; i < names.length; i++) {
-                                    if (names[i] != null) {game.profile.name = names[i]; break;}
+                                    if (names[i] != null) {game.profile.playerName = names[i]; break;}
                                 }
                                 resolve();
                             });
@@ -126,11 +126,13 @@ var appController = (function() {
                     // Bypass
                     return Promise.resolve();
                 })
-                .then(function() {startNewGame(game);});
+                .then(function() {startNewGame(game.gameID, game.profile.playerName);});
             } else if (gameOver) {
                 broadcastState("gameLost", guessIndex, guessValue)
                 .then(function() {return broadcastState("highScores", game.highScores);})
-                .then(function() {return startNewGame();});
+                .then(function() {
+                    return startNewGame(null, game.profile.playerName);
+                });
             } else {
                 broadcastState("nextTurn")
                 .then(function() {return broadcastState("idle", game);});

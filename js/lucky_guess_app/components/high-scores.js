@@ -1,3 +1,4 @@
+// Highscores component
 appController.register(function() {
     var el = null,
         table = null,
@@ -20,10 +21,10 @@ appController.register(function() {
     var highScores = function(scores) {
         return new Promise(function(resolve) {
             currentResolve = resolve;
-            var html = '<tr><th>Rank</th><th>Who</th><th>Score</th><th>Streak</th></tr>';
+            var html = '<tr><th>Rank</th><th>Who</th><th>Score</th><th>Level</th></tr>';
             for(var i = 0; i < scores.length; i++) {
                 var classes = i % 2 == 0 ? ' class = "even"' : "";
-                html += '<tr' + classes + '><td>' + (i + 1) + '</td><td><span class = "player-name">' + scores[i].playerName + '</span></td><td>' + scores[i].score + '</td><td>' + scores[i].longestStreak + '</td></tr>';
+                html += '<tr' + classes + '><td>' + (i + 1) + '</td><td><span class = "player-name">' + scores[i].playerName + '</span></td><td>' + scores[i].score + '</td><td>' + (scores[i].wins + 1) + '</td></tr>';
             }
             table.innerHTML = html;
             fadeIn();

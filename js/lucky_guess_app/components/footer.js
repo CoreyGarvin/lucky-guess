@@ -29,6 +29,7 @@ appController.register(function() {
             presentGame: fadeIn,
             guessResponse: updateState,
             gameWon: fadeOut,
+            gameLost: fadeOut
         }
     );
 }());

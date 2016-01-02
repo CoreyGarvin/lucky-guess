@@ -25,7 +25,7 @@ var html = `
 		<script src="js/lucky_guess_app/components/logo.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/components/name-entry.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/components/score.js" type="text/javascript" charset="UTF-8"></script>
-		<script src="js/lucky_guess_app/luckyguess.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/main.js" type="text/javascript" charset="UTF-8"></script>
 		<meta name="viewport" content="initial-scale=1.0,  maximum-scale=1.0">
 	</head>
 	<body>
@@ -76,7 +76,7 @@ var html = `
 					<a class="choice transparent">9</a>
 					<a class="choice transparent">10</a>
 			</div>
-			<div id = "footer">
+			<div id = "footer" class = "transparent">
 				<span class = "attempts-remaining">Guesses:
 					<span class="tokens">
 						<span class="guess-token"><span class="inner"></span></span>

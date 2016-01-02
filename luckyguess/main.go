@@ -179,7 +179,7 @@ func (game *LuckyGuessGame) save(r *http.Request) (*datastore.Key, error) {
 	} else {
 		return datastore.Put(c, key, game)
 	}
-	return nil, errors.New("Error in save fn, but we should never get here")
+	// return nil, errors.New("Error in save fn, but we should never get here")
 }
 
 func init() {
@@ -324,7 +324,7 @@ func guessHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the key from the URL
 	keyURL := r.FormValue("key")
 	guessURL := r.FormValue("guess")
-	nameURL := r.FormValue("name")
+	// nameURL := r.FormValue("name")
 	var guess int = -1
 	c := appengine.NewContext(r)
 
@@ -355,7 +355,7 @@ func guessHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	game.SetPlayerName(nameURL)
+	// game.SetPlayerName(nameURL)
 
 	// Save game
 	if _, err := game.save(r); err != nil {
