@@ -1,4 +1,4 @@
-var debug = true;
+var debug = false;
 var log = function(msg) { if (debug) console.log(msg);}
 
 var hintsToString = function(hints) {

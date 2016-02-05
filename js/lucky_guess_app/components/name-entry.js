@@ -20,6 +20,7 @@ appController.register(function() {
             if (currentResolve != null) {
                 var resolve = currentResolve;
                 currentResolve = null;
+                nameInput.blur();
                 resolve(nameInput.value);
             }
         });

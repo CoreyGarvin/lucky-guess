@@ -1,18 +1,55 @@
 // Component - contains the circular game buttons
 appController.register(function() {
-    var component = {};
-    var el = {};
-    var buttons = [];
+    var el = null,
+        buttons = null,
+        lastStep = null,
+        animationEnabled = false;
 
     var fadeOut = function() {addClass(el, "transparent");};
     var fadeIn  = function() {removeClass(el, "transparent");};
-    var staggerFadeIn = function() {staggerRemoveClass(buttons, "transparent", 1500);};
-    var staggerFadeOut = function() {staggerAddClass(buttons, "transparent", 1500);};
-    var init = function() {el = document.getElementById("game-choices");};
+    var staggerFadeIn = function() {staggerRemoveClass(buttons, "transparent", 2000);};
+    var staggerFadeOut = function() {staggerAddClass(buttons, "transparent", 2000);};
+    var init = function() {
+        el = document.getElementById("game-choices");
+        window.requestAnimationFrame = (function() {
+          return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback) {
+            return window.setTimeout(callback, 1000 / 60);
+          };
+        })();
+    };
 
     var presentGame = function() {
         fadeIn();
         staggerFadeIn();
+        startAnimating();
+    };
+
+    var startAnimating = function() {
+        animationEnabled = true;
+        requestAnimationFrame(animationStep);
+    };
+
+    var stopAnimating = function() {
+        animationEnabled = false;
+    };
+
+    var animationStep = function(timestamp) {
+        if (!animationEnabled) return;
+
+        // if (!lastStep) lastStep = timestamp;
+        setTimeout(function() {
+            return requestAnimationFrame(animationStep);
+        }, 400);
+
+        // if (timestamp - lastStep < 500)
+        for (i = 0; i < buttons.length; i++) {
+            var r = Math.cos(timestamp/1500 + (100*i)) * 10;
+            var x = Math.cos(timestamp/1000 + (10*i)) * 1;
+            var y = Math.sin(timestamp/700 + (10*i)) * 1;
+            var css = "rotate(" + r +"deg) translate(" + x + "px," + y + "px)";
+            buttons[i].style.webkitTransform = css;
+        }
+        // lastStep = timestamp;
     };
 
     var gameOver = function() {
@@ -69,6 +106,7 @@ appController.register(function() {
         var guessIndex = gameState.currentGame.attemptHistory.slice(-1)[0];
         addClass(buttons[guessIndex], "spent");
         removeClass(buttons[guessIndex], "ajax");
+        removeClass(buttons[guessIndex], "active");
         addClass(buttons[guessIndex], hintsToString(gameState.currentGame.hints));
     };
 

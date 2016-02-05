@@ -45,7 +45,6 @@ var appController = (function() {
         log("\n" + arguments[0]);
         return Promise.all(registeredComponents.map(
             function(component) {
-                // return component.enterState(currentState, arg);
                 return component.enterState.apply(component, args);
             })
         );
@@ -53,9 +52,6 @@ var appController = (function() {
 
     component.register = function() {
         for (var i = 0; i < arguments.length; i++) {
-            if (!arguments[i].hasOwnProperty("enterState")) {
-                arguments[i].enterState = enterState;
-            }
             registeredComponents.push(arguments[i]);
         }
     };

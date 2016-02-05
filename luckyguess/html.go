@@ -13,6 +13,7 @@ var html = `
 		<meta name="author" content="Corey Garvin" />
 		<link rel="shortcut icon" href="../favicon.ico">
 		<link rel="stylesheet" type="text/css" href="css/main.css" />
+		<script src="js/modernizr.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/promiscuous.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/utils.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/services/luckyguess-service.js" type="text/javascript" charset="UTF-8"></script>
@@ -25,10 +26,12 @@ var html = `
 		<script src="js/lucky_guess_app/components/logo.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/components/name-entry.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/lucky_guess_app/components/score.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/lucky_guess_app/components/window-controller.js" type="text/javascript" charset="UTF-8"></script>
 		<script src="js/main.js" type="text/javascript" charset="UTF-8"></script>
+		<script src="js/fastactive.js" type="text/javascript" charset="UTF-8"></script>
 		<meta name="viewport" content="initial-scale=1.0,  maximum-scale=1.0">
 	</head>
-	<body>
+	<body class = "no-touch">
 		<div class="container level-0">
 			<header class = "transparent">
 				<h1 class = "transparent">What Number Am I Thinking Of?</h1>

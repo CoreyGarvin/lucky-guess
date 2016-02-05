@@ -7,18 +7,21 @@ package luckyguess
 import (
 	"encoding/json"
 	"errors"
-	//"fmt"
+	"fmt"
 	"io"
 	// "html/template"
 	"io/ioutil"
 	"math/rand"
+	// "net"
 	"net/http"
 	// "os"
 	"strconv"
+	"strings"
 	"time"
 
 	"appengine"
 	"appengine/datastore"
+	"appengine/urlfetch"
 )
 
 var (
@@ -62,6 +65,44 @@ type GameState struct {
 	Hints              GameHint `json:"hints"`
 }
 
+/*{
+  "ip": "74.125.45.100",
+  "hostname": "No Hostname",
+  "city": "Tulsa",
+  "region": "Oklahoma",
+  "country": "US",
+  "loc": "36.1540,-95.9928",
+  "org": "AS15169 Google Inc.",
+  "postal": "74172"
+}*/
+
+type GeoLocation struct {
+	City     string    `json:"city"`
+	Region      string      `json:"region"`
+	Country string      `json:"country"`
+	Location   string    `json:"loc"`
+	Postal string  `json:"postal"`
+}
+
+type HighScore struct {
+	PlayerName    string    `json:"playerName"`
+	Wins          int       `json:"wins"`
+	Losses        int       `json:"losses"`
+	Score         int       `json:"score"`
+	Streak        int       `json:"streak"`
+	LongestStreak int       `json:"longestStreak"`
+	When          time.Time `json:"when"`
+	IPAddress		string 		`json:"ipAddress"`
+	GeoLocation  GeoLocation `json:"geoLocation"`
+}
+
+type LuckyGuessGame struct {
+	Profile     HighScore   `json:"profile"`
+	CurrentGame GameState   `json:"currentGame"`
+	GameID      string      `json:"gameID"`
+	HighScores  []HighScore `json:"highScores"`
+}
+
 func (gameState *GameState) totalAttemptsRemaining() int {
 	return gameState.AttemptsRemaining +
 		max(gameState.BorrowableAttempts, 0) +
@@ -90,23 +131,6 @@ func (gameState *GameState) recordGuess(guess int) error {
 
 	gameState.AttemptHistory = append(gameState.AttemptHistory, guess)
 	return nil
-}
-
-type HighScore struct {
-	PlayerName    string    `json:"playerName"`
-	Wins          int       `json:"wins"`
-	Losses        int       `json:"losses"`
-	Score         int       `json:"score"`
-	Streak        int       `json:"streak"`
-	LongestStreak int       `json:"longestStreak"`
-	When          time.Time `json:"when"`
-}
-
-type LuckyGuessGame struct {
-	Profile     HighScore   `json:"profile"`
-	CurrentGame GameState   `json:"currentGame"`
-	GameID      string      `json:"gameID"`
-	HighScores  []HighScore `json:"highScores"`
 }
 
 func (game *LuckyGuessGame) SetPlayerName(name string) {
@@ -189,6 +213,46 @@ func init() {
 	// http.HandleFunc("/hiscore", highScores)
 }
 
+func getContent(c appengine.Context, url string) ([]byte, error) {
+    client := urlfetch.Client(c)
+    resp, err := client.Get(url)
+    if err != nil {
+        return nil, err
+    }
+    // fmt.Fprintf(w, "HTTP GET returned status %v", resp.Status)
+    // Defer the closing of the body
+    defer resp.Body.Close()
+    // Read the content into a byte array
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+      return nil, err
+    }
+    // At this point we're done - simply return the bytes
+    // c := appengine.NewContext(nil)
+    c.Infof("\n\nResponse: %s\n\n", string(body))
+    return body, nil
+}
+
+// This function will attempt to get the IP record for
+// a given IP. If no errors occur, it will return a pair
+// of the record and nil. If it was not successful, it will
+// return a pair of nil and the error.
+func GetIpRecord(c appengine.Context, ip string) (*GeoLocation, error) {
+    // Fetch the JSON content for that given IP
+    content, err := getContent(c,
+      fmt.Sprintf("http://ipinfo.io/%s/geo", ip))
+    if err != nil {
+        return nil, err
+    }
+    // Fill the record with the data from the JSON
+    var record GeoLocation
+    err = json.Unmarshal(content, &record)
+    if err != nil {
+        return nil, err
+    }
+	return &record, err
+}
+
 func topTen(c appengine.Context) ([]HighScore, error) {
 	// w.Header().Set("Content-Type", "application/json")
 	// c := appengine.NewContext(r)
@@ -228,8 +292,22 @@ func newGameHandler(w http.ResponseWriter, r *http.Request) {
 			AttemptsRemaining:  attemptsPerRound,
 			BorrowableAttempts: maxBorrow,
 		},
-		Profile: HighScore{},
+		Profile: HighScore{
+			IPAddress: strings.Split(r.RemoteAddr, ":")[0],
+		},
 	}
+
+	if geoLocation, err := GetIpRecord(c, newGame.Profile.IPAddress); err == nil {
+		newGame.Profile.GeoLocation = *geoLocation
+	} else {
+		// c := appengine.NewContext(r)
+		c.Infof("problem ", err)
+	}
+
+	// c.Infof("\n\nIP: %T\n\n", r.RemoteAddr)
+	// if ip, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+	// newGame.Profile.IPAddress = r.RemoteAddr
+	// }
 
 	// Decode the key, load the game
 	if keyURL != "" {
@@ -254,7 +332,7 @@ func newGameHandler(w http.ResponseWriter, r *http.Request) {
 					newGame.CurrentGame.AttemptsRemaining = attemptsPerRound - (maxBorrow - newGame.CurrentGame.BorrowableAttempts)
 					newGame.CurrentGame.BorrowableAttempts = -1
 
-					// Player did not borrow last round, because they could not
+					// Player did not borrow last round, because they could not - reset
 				} else if newGame.CurrentGame.BorrowableAttempts == -1 {
 					newGame.CurrentGame.BorrowableAttempts = maxBorrow
 				}

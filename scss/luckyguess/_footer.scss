@@ -1,8 +1,10 @@
 #footer {
 	@include position(absolute, null null 0 null);
+    position: fixed;
+    bottom: 0;
     width: 100%;
     padding: 10px;
-    font-size: 17px;
+    font-size: 14px;
     text-align: center;
     background: rgba(0,0,0,0.2);
     @include transition(all .6s ease-in-out);

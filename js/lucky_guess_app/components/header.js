@@ -17,9 +17,10 @@ appController.register(function() {
     var fadeOut = function() {addClass(el, "transparent");};
     var fadeIn = function() {removeClass(el, "transparent");};
 
-    var createdGame = function() {
+    var createdGame = function(gameState) {
         // Reset header text
         h1.innerHTML = 'What Number Am I Thinking Of?';
+        h1.innerHTML = "Greetings from " + gameState.profile.geoLocation.city + "!";
         h2.textContent = "I give you 3 guesses";
     };
 
